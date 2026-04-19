@@ -1,1 +1,1 @@
-# Autonomous Cognitive Engine
+# Autonomous Cognitive Engine (ACE) - The Agent
