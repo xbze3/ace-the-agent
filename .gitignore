@@ -1,3 +1,10 @@
 .env
 venv/
 *.log
+*.egg-info/
+
+
+__pycache__/
+*.pyc
+*.pyo
+*.pyd

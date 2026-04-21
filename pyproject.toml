@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ace-agent"
+version = "0.1.0"
+description = "ACE Autonomous Cognitive Engine"
+requires-python = ">=3.8"
+
+authors = [{ name = "Ezra Minty", email = "ezranminty@gmail.com" }]
+
+readme = "README.md"
+license = { text = "MIT" }
+keywords = ["ai", "agent", "automation", "cli"]
+
+[project.scripts]
+ace = "ace:main"
+
+[tool.setuptools]
+py-modules = ["ace"]
+
+[tool.setuptools.packages.find]
+include = ["core*", "llm*", "runtime*", "tools*", "memory*", "config*"]
+exclude = ["logs*", "workspace*"]
