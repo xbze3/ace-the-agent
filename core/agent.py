@@ -1,3 +1,4 @@
+import os
 from core.state import AgentState
 from core.harness import build_messages
 from llm.client import call_llm
@@ -5,9 +6,15 @@ from runtime.logger import log_step
 from llm.parser import parse_llm_response
 from runtime.executor import execute_tool
 
+from dotenv import load_dotenv  # type: ignore
+
+load_dotenv()
+
+MAX_STEPS = int(os.getenv("MAX_STEPS", 30))
+
 
 class ACEAgent:
-    def __init__(self, max_steps: int = 30):
+    def __init__(self, max_steps: int = MAX_STEPS):
         self.max_steps = max_steps
         self.state = AgentState()
 
