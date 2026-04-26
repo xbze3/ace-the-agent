@@ -1,14 +1,59 @@
 import os
+import time
 import requests
 from dotenv import load_dotenv  # type: ignore
 
 load_dotenv()
 
 REQUEST_TIMEOUT = int(os.getenv("LLM_REQUEST_TIMEOUT", "60"))
+MAX_RETRIES = int(os.getenv("LLM_MAX_RETRIES", "3"))
+RETRY_BACKOFF_SECONDS = float(os.getenv("LLM_RETRY_BACKOFF_SECONDS", "2"))
 
 
 def get_env(name: str, default: str | None = None) -> str | None:
     return os.getenv(name, default)
+
+
+def post_with_retries(url, *, headers, json, timeout):
+    last_error = None
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        try:
+            response = requests.post(
+                url,
+                headers=headers,
+                json=json,
+                timeout=timeout,
+            )
+
+            if response.status_code in (429, 500, 502, 503, 504):
+                last_error = f"HTTP {response.status_code}: {response.text[:500]}"
+
+                if attempt < MAX_RETRIES:
+                    time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+                    continue
+
+            response.raise_for_status()
+            return response
+
+        except (
+            requests.exceptions.Timeout,
+            requests.exceptions.ConnectionError,
+        ) as e:
+            last_error = str(e)
+
+            if attempt < MAX_RETRIES:
+                time.sleep(RETRY_BACKOFF_SECONDS * attempt)
+                continue
+
+            raise
+
+        except requests.exceptions.RequestException:
+            raise
+
+    raise requests.exceptions.RequestException(
+        f"Request failed after {MAX_RETRIES} attempts: {last_error}"
+    )
 
 
 def call_llm(messages):
@@ -50,13 +95,12 @@ def call_ollama(messages):
         headers["Authorization"] = f"Bearer {api_key}"
 
     try:
-        response = requests.post(
+        response = post_with_retries(
             url,
             headers=headers,
             json=payload,
             timeout=REQUEST_TIMEOUT,
         )
-        response.raise_for_status()
 
         data = response.json()
         content = data.get("message", {}).get("content")
@@ -67,9 +111,9 @@ def call_ollama(messages):
         return content
 
     except requests.exceptions.Timeout:
-        return "ERROR: Ollama request timed out"
+        return "ERROR: Ollama request timed out after retries"
     except requests.exceptions.RequestException as e:
-        return f"ERROR: Ollama request failed → {str(e)}"
+        return f"ERROR: Ollama request failed after retries → {str(e)}"
     except ValueError as e:
         return f"ERROR: Failed to parse Ollama JSON response → {str(e)}"
     except Exception as e:
@@ -100,13 +144,12 @@ def call_openai(messages):
     }
 
     try:
-        response = requests.post(
+        response = post_with_retries(
             url,
             headers=headers,
             json=payload,
             timeout=REQUEST_TIMEOUT,
         )
-        response.raise_for_status()
 
         data = response.json()
         choices = data.get("choices", [])
@@ -122,9 +165,9 @@ def call_openai(messages):
         return content
 
     except requests.exceptions.Timeout:
-        return "ERROR: OpenAI request timed out"
+        return "ERROR: OpenAI request timed out after retries"
     except requests.exceptions.RequestException as e:
-        return f"ERROR: OpenAI request failed → {str(e)}"
+        return f"ERROR: OpenAI request failed after retries → {str(e)}"
     except ValueError as e:
         return f"ERROR: Failed to parse OpenAI JSON response → {str(e)}"
     except Exception as e:

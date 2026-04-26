@@ -236,15 +236,34 @@ def format_tools_for_prompt():
     return "\n\n".join(tool_descriptions)
 
 
-def build_messages(state):
+def build_messages(state, memories=None):
     """
     Converts agent state into LLM-ready messages.
     """
     tools_text = format_tools_for_prompt()
 
+    memory_block = ""
+    if memories:
+        memory_lines = []
+
+        for memory in memories:
+            content = memory.get("content", "").strip()
+            metadata = memory.get("metadata", {})
+            memory_type = metadata.get("type", "memory")
+
+            if content:
+                memory_lines.append(f"- ({memory_type}) {content}")
+
+        if memory_lines:
+            memory_block = (
+                "\n\nRelevant long-term memories:\n"
+                + "\n".join(memory_lines)
+                + "\n\nUse these memories only when relevant. Do not mention them unless useful."
+            )
+
     system_message = {
         "role": "system",
-        "content": SYSTEM_PROMPT + "\n\nAvailable tools:\n" + tools_text,
+        "content": SYSTEM_PROMPT + memory_block + "\n\nAvailable tools:\n" + tools_text,
     }
 
     messages = [system_message]
