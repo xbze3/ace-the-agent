@@ -14,7 +14,7 @@ readme = "README.md"
 license = { text = "MIT" }
 keywords = ["ai", "agent", "automation", "cli"]
 
-dependencies = ["python-dotenv", "requests", "chromadb"]
+dependencies = ["python-dotenv", "requests", "chromadb", "pyyaml"]
 
 [project.scripts]
 ace = "ace:main"
@@ -23,5 +23,13 @@ ace = "ace:main"
 py-modules = ["ace"]
 
 [tool.setuptools.packages.find]
-include = ["core*", "llm*", "runtime*", "tools*", "memory*", "config*"]
+include = [
+    "core*",
+    "llm*",
+    "runtime*",
+    "tools*",
+    "memory*",
+    "config*",
+    "skills*",
+]
 exclude = ["logs*", "workspace*", "memory_db*"]

@@ -1,6 +1,5 @@
 from tools.registry import get_tool_schemas
 
-
 SYSTEM_PROMPT = """
 You are ACE (Autonomous Cognitive Engine), an AI agent.
 
@@ -207,8 +206,13 @@ Be precise. Be structured. Use tools well.
 """
 
 
-def format_tools_for_prompt():
+def format_tools_for_prompt(allowed_tools: list[str] | None = None):
     tools = get_tool_schemas()
+
+    if allowed_tools is not None:
+        allowed = set(allowed_tools)
+        tools = [tool for tool in tools if tool.get("name") in allowed]
+
     tool_descriptions = []
 
     for tool in tools:
@@ -233,37 +237,92 @@ def format_tools_for_prompt():
 
         tool_descriptions.append("\n".join(lines))
 
+    if not tool_descriptions:
+        return "No tools available for this task."
+
     return "\n\n".join(tool_descriptions)
 
 
-def build_messages(state, memories=None):
+def build_skill_block(active_skill=None, allowed_tools: list[str] | None = None):
+    if not active_skill:
+        return ""
+
+    if allowed_tools is None:
+        allowed_text = "All registered tools may be available."
+    elif allowed_tools:
+        allowed_text = ", ".join(allowed_tools)
+    else:
+        allowed_text = "No tools available."
+
+    return f"""
+
+Active skill instructions:
+{active_skill.prompt_block}
+
+Resolved tool permissions for this skill:
+{allowed_text}
+
+Important:
+- The active skill should guide your workflow.
+- Only use tools listed in the resolved tool permissions above.
+- If no tools are available, respond with final_answer instead of attempting a tool call.
+- If the skill does not fit the current user request anymore, return a final_answer explaining what you can do next.
+"""
+
+
+def build_memory_block(memories=None):
+    if not memories:
+        return ""
+
+    memory_lines = []
+
+    for memory in memories:
+        content = memory.get("content", "").strip()
+        metadata = memory.get("metadata", {})
+        memory_type = metadata.get("type", "memory")
+
+        if content:
+            memory_lines.append(f"- ({memory_type}) {content}")
+
+    if not memory_lines:
+        return ""
+
+    return (
+        "\n\nRelevant long-term memories:\n"
+        + "\n".join(memory_lines)
+        + "\n\nUse these memories only when relevant. Do not mention them unless useful."
+    )
+
+
+def build_messages(state, memories=None, active_skill=None, allowed_tools=None):
     """
     Converts agent state into LLM-ready messages.
+
+    allowed_tools should be resolved by ACEAgent before calling this function.
+
+    Meaning:
+    - allowed_tools is None: show all registered tools.
+    - allowed_tools is []: show no tools.
+    - allowed_tools is ["create_file", ...]: show only those tools.
     """
-    tools_text = format_tools_for_prompt()
 
-    memory_block = ""
-    if memories:
-        memory_lines = []
+    tools_text = format_tools_for_prompt(allowed_tools=allowed_tools)
 
-        for memory in memories:
-            content = memory.get("content", "").strip()
-            metadata = memory.get("metadata", {})
-            memory_type = metadata.get("type", "memory")
-
-            if content:
-                memory_lines.append(f"- ({memory_type}) {content}")
-
-        if memory_lines:
-            memory_block = (
-                "\n\nRelevant long-term memories:\n"
-                + "\n".join(memory_lines)
-                + "\n\nUse these memories only when relevant. Do not mention them unless useful."
-            )
+    memory_block = build_memory_block(memories)
+    skill_block = build_skill_block(
+        active_skill=active_skill,
+        allowed_tools=allowed_tools,
+    )
 
     system_message = {
         "role": "system",
-        "content": SYSTEM_PROMPT + memory_block + "\n\nAvailable tools:\n" + tools_text,
+        "content": (
+            SYSTEM_PROMPT
+            + memory_block
+            + skill_block
+            + "\n\nAvailable tools:\n"
+            + tools_text
+        ),
     }
 
     messages = [system_message]

@@ -1,49 +1,65 @@
 import os
 import json
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
-LOG_DIR = "logs"
+LOG_DIR = Path("logs")
+LOG_DIR.mkdir(exist_ok=True)
+
+LOG_FILE = LOG_DIR / "ace.log"
+
+_SHOW_LOGS = os.getenv("ACE_SHOW_LOGS", "false").lower() in {
+    "1",
+    "true",
+    "yes",
+    "on",
+}
 
 
-def ensure_log_dir():
-    if not os.path.exists(LOG_DIR):
-        os.makedirs(LOG_DIR)
-
-
-def get_log_file():
-    ensure_log_dir()
-    timestamp = datetime.now().strftime("%Y-%m-%d")
-    return os.path.join(LOG_DIR, f"{timestamp}.log")
-
-
-def log_step(event_type: str, data):
+def set_console_logging(enabled: bool) -> None:
     """
-    Logs structured data to file + console
+    Enable or disable printing logs to the terminal.
+    Logs are still written to file either way.
+    """
+    global _SHOW_LOGS
+    _SHOW_LOGS = enabled
+
+
+def get_console_logging() -> bool:
+    return _SHOW_LOGS
+
+
+def _format_payload(payload: Any) -> str:
+    if isinstance(payload, (dict, list)):
+        return json.dumps(payload, indent=2, ensure_ascii=False)
+
+    return json.dumps(payload, indent=2, ensure_ascii=False)
+
+
+def log_step(event: str, payload: Any = None) -> None:
+    """
+    Writes logs to file always.
+    Prints logs to console only when console logging is enabled.
     """
 
-    log_entry = {
-        "timestamp": datetime.now().isoformat(),
-        "event": event_type,
-        "data": data,
+    timestamp = datetime.now().isoformat()
+
+    entry = {
+        "timestamp": timestamp,
+        "event": event,
+        "payload": payload,
     }
 
-    try:
-        with open(get_log_file(), "a") as f:
-            f.write(json.dumps(log_entry) + "\n")
-    except Exception as e:
-        print(f"Logger file write error: {e}")
+    with LOG_FILE.open("a", encoding="utf-8") as file:
+        file.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
-    print_pretty(log_entry)
+    if not _SHOW_LOGS:
+        return
 
-
-def print_pretty(entry):
     print("\nLOG ENTRY")
-    print(f"{entry['timestamp']}")
-    print(f"{entry['event']}")
+    print(timestamp)
+    print(event)
 
-    try:
-        formatted = json.dumps(entry["data"], indent=2)
-    except:
-        formatted = str(entry["data"])
-
-    print(formatted)
+    if payload is not None:
+        print(_format_payload(payload))

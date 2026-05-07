@@ -12,3 +12,7 @@ __pycache__/
 workspace/
 memory/memory_db/
 dist/
+
+./agents
+skills/skills-lock.json
+

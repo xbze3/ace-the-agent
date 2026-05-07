@@ -41,14 +41,36 @@ def normalize_arguments(arguments):
     return arguments
 
 
-def execute_tool(action: str, arguments: dict):
+def execute_tool(
+    action: str,
+    arguments: dict,
+    allowed_tools: list[str] | None = None,
+):
     """
     Executes a tool safely.
     Always returns a string result.
+
+    If allowed_tools is provided, only tools in that list may be executed.
+    This is used by ACE skills to enforce tool permissions at runtime.
     """
 
     if not action:
         return "ERROR: No action provided"
+
+    if allowed_tools:
+        if action not in allowed_tools:
+            log_step(
+                "EXECUTOR_BLOCKED_TOOL",
+                {
+                    "tool": action,
+                    "allowed_tools": allowed_tools,
+                },
+            )
+
+            return (
+                f"ERROR: Tool '{action}' is not allowed for the active skill. "
+                f"Allowed tools: {', '.join(allowed_tools)}"
+            )
 
     tool = get_tool_by_name(action)
 
@@ -59,6 +81,8 @@ def execute_tool(action: str, arguments: dict):
         return "ERROR: Arguments must be a dictionary"
 
     arguments = normalize_arguments(arguments)
+
+    arguments = filter_arguments(tool, arguments)
 
     missing = check_missing_params(tool, arguments)
     if missing:
@@ -105,3 +129,23 @@ def check_missing_params(tool, arguments):
     missing = [key for key in required_keys if key not in arguments]
 
     return missing if missing else None
+
+
+def filter_arguments(tool, arguments):
+    """
+    Removes arguments that are not accepted by the tool.
+    This protects tools from LLM-added metadata like:
+    created, timestamp, description, type, schema, etc.
+    """
+
+    if not isinstance(arguments, dict):
+        return arguments
+
+    params = getattr(tool, "parameters", None) or {}
+
+    if not params:
+        return arguments
+
+    allowed_keys = set(params.keys())
+
+    return {key: value for key, value in arguments.items() if key in allowed_keys}
