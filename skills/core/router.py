@@ -67,9 +67,10 @@ class SkillRouter:
                 "role": "system",
                 "content": (
                     "You are ACE's skill router. "
-                    "Your job is to choose the best skill for the user's request. "
-                    "Only choose a skill if it clearly helps. "
-                    "If no skill is appropriate, return null. "
+                    "Your job is to choose the best starting skill for the user's request. "
+                    "A task may involve multiple domains, but you should choose the skill that best matches the first major phase of the task. "
+                    "For blended tasks, choose the skill that should begin the work; ACE may switch skills later. "
+                    "Only return null if no available skill is useful at all. "
                     "You must return ONLY valid JSON. "
                     "Do not return markdown. "
                     "Do not use code fences. "
@@ -84,7 +85,7 @@ class SkillRouter:
                         "available_skills": skill_summaries,
                         "valid_skill_names": valid_skill_names,
                         "required_output_format": {
-                            "skill": "Use one exact skill name from valid_skill_names, or null",
+                            "skill": "Use one exact skill name from valid_skill_names as the best starting skill, or null",
                             "confidence": "A number from 0 to 1",
                             "reason": "A short reason",
                         },
