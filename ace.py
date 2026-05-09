@@ -29,6 +29,7 @@ def print_banner(show_logs: bool = False):
     print("   /logs       Show log display mode")
     print("   /logs on    Show detailed runtime logs")
     print("   /logs off   Show clean spinner/status view")
+    print("   /paste      Enter multi-line request mode")
     print("   /clear      Clear terminal")
     print("   /exit       End session")
     print(line("═") + "\n")
@@ -46,6 +47,7 @@ def print_help():
     print(
         " /logs off   Show only clean states like checking memory, thinking, and running tools"
     )
+    print(" /paste      Enter multi-line request mode. Submit with /end")
     print(" /clear      Clear the terminal screen")
     print(" /exit       End the current session")
     print(" /quit       End the current session")
@@ -139,6 +141,39 @@ def set_logs(agent: ACEAgent, enabled: bool):
     print(line("-") + "\n")
 
 
+def read_multiline_input() -> str:
+    print("\n" + line("-"))
+    print(" MULTI-LINE INPUT")
+    print(line("-"))
+    print(" Paste or type your request below.")
+    print(" Type /end on its own line to submit.")
+    print(" Type /cancel on its own line to cancel.")
+    print(line("-"))
+
+    lines = []
+
+    while True:
+        try:
+            line_input = input("... ")
+
+        except EOFError:
+            print_exit()
+            raise SystemExit
+
+        command = line_input.strip().lower()
+
+        if command == "/end":
+            break
+
+        if command == "/cancel":
+            print("\nMulti-line input cancelled.\n")
+            return ""
+
+        lines.append(line_input)
+
+    return "\n".join(lines).strip()
+
+
 def handle_command(user_input: str, agent: ACEAgent) -> bool:
     """
     Handles CLI commands.
@@ -196,6 +231,12 @@ def main():
 
             if not user_input:
                 continue
+
+            if user_input.lower().strip() in ["/paste", "/multiline", "/ml"]:
+                user_input = read_multiline_input()
+
+                if not user_input:
+                    continue
 
             try:
                 if handle_command(user_input, agent):
