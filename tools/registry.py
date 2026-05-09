@@ -27,6 +27,32 @@ from tools.command_tools import (
     install_npm_package,
 )
 
+from tools.project_tools import (
+    check_node_environment,
+    create_next_app,
+    create_vite_app,
+    create_react_app_vite,
+    create_vue_app_vite,
+    create_svelte_app_vite,
+    create_astro_app,
+    create_express_api,
+    run_npm_dev,
+    run_npm_build,
+    run_npm_start,
+    install_npm_packages,
+    install_frontend_basics,
+    install_backend_basics,
+    install_typescript_node_dev_tools,
+    init_shadcn,
+    add_shadcn_component,
+    add_shadcn_components,
+    open_project_tree,
+    list_processes,
+    read_process_log,
+    stop_process,
+    stop_all_processes,
+)
+
 from tools.api_tools import (
     http_get,
     http_post,
@@ -521,6 +547,436 @@ TOOLS = [
             },
         },
         required=["process_id"],
+    ),
+    Tool(
+        name="check_node_environment",
+        func=check_node_environment,
+        description="Check whether Node.js, npm, and npx are available",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="create_next_app",
+        func=create_next_app,
+        description="Create a Next.js project non-interactively using create-next-app. Use this instead of raw run_command for Next.js projects.",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new Next.js project",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "use_typescript": {
+                "type": "boolean",
+                "description": "Whether to use TypeScript",
+            },
+            "use_tailwind": {
+                "type": "boolean",
+                "description": "Whether to configure Tailwind CSS",
+            },
+            "use_eslint": {
+                "type": "boolean",
+                "description": "Whether to configure ESLint",
+            },
+            "use_app_router": {
+                "type": "boolean",
+                "description": "Whether to use the Next.js App Router",
+            },
+            "use_src_dir": {
+                "type": "boolean",
+                "description": "Whether to use a src directory",
+            },
+            "import_alias": {
+                "type": "string",
+                "description": "Import alias, usually @/*",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="create_vite_app",
+        func=create_vite_app,
+        description="Create a Vite project non-interactively",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new Vite project",
+            },
+            "template": {
+                "type": "string",
+                "description": "Vite template, such as react-ts, react, vue-ts, svelte-ts, vanilla-ts",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="create_react_app_vite",
+        func=create_react_app_vite,
+        description="Create a React + TypeScript app using Vite",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new React project",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="create_vue_app_vite",
+        func=create_vue_app_vite,
+        description="Create a Vue + TypeScript app using Vite",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new Vue project",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="create_svelte_app_vite",
+        func=create_svelte_app_vite,
+        description="Create a Svelte + TypeScript app using Vite",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new Svelte project",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="create_astro_app",
+        func=create_astro_app,
+        description="Create an Astro project non-interactively",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new Astro project",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "template": {
+                "type": "string",
+                "description": "Astro template, usually basics",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="create_express_api",
+        func=create_express_api,
+        description="Create a small Express API project with package.json and src/server.js",
+        parameters={
+            "project_name": {
+                "type": "string",
+                "description": "Folder name for the new Express API project",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["project_name"],
+    ),
+    Tool(
+        name="run_npm_dev",
+        func=run_npm_dev,
+        description="Start npm run dev without blocking the agent",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "script": {
+                "type": "string",
+                "description": "Script name, usually dev",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="run_npm_build",
+        func=run_npm_build,
+        description="Run npm build and wait for completion",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "script": {
+                "type": "string",
+                "description": "Script name, usually build",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="run_npm_start",
+        func=run_npm_start,
+        description="Start npm run start without blocking the agent",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "script": {
+                "type": "string",
+                "description": "Script name, usually start",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="install_npm_packages",
+        func=install_npm_packages,
+        description="Install multiple npm packages from a space-separated string",
+        parameters={
+            "packages": {
+                "type": "string",
+                "description": "Space-separated npm packages to install",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "dev": {
+                "type": "boolean",
+                "description": "Whether to install as dev dependencies",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["packages"],
+    ),
+    Tool(
+        name="install_frontend_basics",
+        func=install_frontend_basics,
+        description="Install common frontend libraries such as lucide-react, framer-motion, recharts, clsx, and tailwind-merge",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="install_backend_basics",
+        func=install_backend_basics,
+        description="Install common Node backend libraries such as express, cors, dotenv, and zod",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="install_typescript_node_dev_tools",
+        func=install_typescript_node_dev_tools,
+        description="Install TypeScript Node development tools",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="init_shadcn",
+        func=init_shadcn,
+        description="Initialize shadcn/ui non-interactively in an existing project",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="add_shadcn_component",
+        func=add_shadcn_component,
+        description="Add one shadcn/ui component",
+        parameters={
+            "component": {
+                "type": "string",
+                "description": "Component name, such as button, card, input, dialog",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["component"],
+    ),
+    Tool(
+        name="add_shadcn_components",
+        func=add_shadcn_components,
+        description="Add multiple shadcn/ui components from a space-separated string",
+        parameters={
+            "components": {
+                "type": "string",
+                "description": "Space-separated component names, such as button card input dialog",
+            },
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "timeout": {
+                "type": "integer",
+                "description": "Timeout in seconds",
+            },
+        },
+        required=["components"],
+    ),
+    Tool(
+        name="open_project_tree",
+        func=open_project_tree,
+        description="Return a simple project tree while ignoring large generated folders",
+        parameters={
+            "cwd": {
+                "type": "string",
+                "description": "Relative working directory inside workspace",
+            },
+            "max_depth": {
+                "type": "integer",
+                "description": "Maximum tree depth",
+            },
+        },
+        required=[],
+    ),
+    Tool(
+        name="list_processes",
+        func=list_processes,
+        description="List background processes started by project tools",
+        parameters={},
+        required=[],
+    ),
+    Tool(
+        name="read_process_log",
+        func=read_process_log,
+        description="Read stdout or stderr logs from a background process started by project tools",
+        parameters={
+            "pid": {
+                "type": "string",
+                "description": "Process PID returned by a non-blocking project tool",
+            },
+            "stream": {
+                "type": "string",
+                "description": "stdout or stderr",
+            },
+            "lines": {
+                "type": "integer",
+                "description": "Number of recent lines to read",
+            },
+        },
+        required=["pid"],
+    ),
+    Tool(
+        name="stop_process",
+        func=stop_process,
+        description="Stop a background process started by project tools",
+        parameters={
+            "pid": {
+                "type": "string",
+                "description": "Process PID returned by a non-blocking project tool",
+            },
+        },
+        required=["pid"],
+    ),
+    Tool(
+        name="stop_all_processes",
+        func=stop_all_processes,
+        description="Stop all background processes started by project tools",
+        parameters={},
+        required=[],
     ),
     Tool(
         name="web_search",
