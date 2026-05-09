@@ -187,6 +187,29 @@ Incorrect example:
   }
 }
 
+Internal skill switching:
+
+If the active skill is no longer the best fit for the next part of the task, you may request a skill switch using this JSON format:
+
+{
+  "action": "switch_skill",
+  "arguments": {
+    "skill": "exact_skill_name",
+    "reason": "brief reason for switching"
+  }
+}
+
+Use switch_skill only when the task clearly moves into a different domain.
+Examples:
+- frontend-design → nodejs-express-server when a frontend task expands into backend/API work
+- nodejs-express-server → api-client-tester when the next step is testing endpoints
+- project-scaffolder → python-script-builder when the next step is writing/running Python code
+
+Do not switch skills unnecessarily.
+If a skill switch fails or the task can be completed with the current skill and tools, continue without switching.
+Do not invent skill names.
+Only switch to a skill that is available in the loaded skill list.
+
 Final answer rules:
 - Use final_answer only when the user’s request is satisfied or no further useful action can be taken.
 - Keep final answers concise but informative.
@@ -294,7 +317,36 @@ def build_memory_block(memories=None):
     )
 
 
-def build_messages(state, memories=None, active_skill=None, allowed_tools=None):
+def build_available_skills_block(available_skills=None):
+    if not available_skills:
+        return ""
+
+    lines = []
+
+    for skill in available_skills:
+        name = skill.get("name")
+        description = skill.get("description", "")
+
+        if name:
+            lines.append(f"- {name}: {description}")
+
+    if not lines:
+        return ""
+
+    return (
+        "\n\nAvailable skills for possible switching:\n"
+        + "\n".join(lines)
+        + "\n\nOnly use switch_skill with one of these exact skill names."
+    )
+
+
+def build_messages(
+    state,
+    memories=None,
+    active_skill=None,
+    allowed_tools=None,
+    available_skills=None,
+):
     """
     Converts agent state into LLM-ready messages.
 
@@ -309,10 +361,13 @@ def build_messages(state, memories=None, active_skill=None, allowed_tools=None):
     tools_text = format_tools_for_prompt(allowed_tools=allowed_tools)
 
     memory_block = build_memory_block(memories)
+
     skill_block = build_skill_block(
         active_skill=active_skill,
         allowed_tools=allowed_tools,
     )
+
+    available_skills_block = build_available_skills_block(available_skills)
 
     system_message = {
         "role": "system",
@@ -320,6 +375,7 @@ def build_messages(state, memories=None, active_skill=None, allowed_tools=None):
             SYSTEM_PROMPT
             + memory_block
             + skill_block
+            + available_skills_block
             + "\n\nAvailable tools:\n"
             + tools_text
         ),

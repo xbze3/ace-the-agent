@@ -374,6 +374,7 @@ class ACEAgent:
                         memories=memories,
                         active_skill=active_skill,
                         allowed_tools=allowed_tools,
+                        available_skills=self.skill_registry.summaries(),
                     )
 
                 self._debug("LLM Messages", messages)
@@ -461,6 +462,59 @@ class ACEAgent:
                     self._status("Error", "missing action")
                     log_step("AGENT_ERROR", error_msg)
                     return error_msg
+
+                if action == "switch_skill":
+                    requested_skill = arguments.get("skill")
+                    reason = arguments.get("reason", "")
+
+                    if not requested_skill:
+                        result = "ERROR: switch_skill requires a 'skill' argument."
+                        self.state.add_tool_result(result)
+                        log_step("SKILL_SWITCH_ERROR", result)
+                        continue
+
+                    new_skill = self.skill_registry.get(requested_skill)
+
+                    if not new_skill:
+                        available = [
+                            skill.name for skill in self.skill_registry.list_skills()
+                        ]
+                        result = (
+                            f"ERROR: Unknown skill '{requested_skill}'. "
+                            f"Available skills: {available}"
+                        )
+                        self.state.add_tool_result(result)
+                        log_step(
+                            "SKILL_SWITCH_ERROR",
+                            {
+                                "requested_skill": requested_skill,
+                                "available_skills": available,
+                            },
+                        )
+                        continue
+
+                    active_skill = new_skill
+                    allowed_tools = self._resolve_allowed_tools(active_skill)
+
+                    result = f"Switched active skill to '{active_skill.name}'." + (
+                        f" Reason: {reason}" if reason else ""
+                    )
+
+                    self._status("Skill", f"switched to {active_skill.name}")
+                    self._debug("Skill Switch Reason", reason)
+                    self._debug("Resolved Allowed Tools", allowed_tools)
+
+                    log_step(
+                        "SKILL_SWITCHED",
+                        {
+                            "skill": active_skill.name,
+                            "reason": reason,
+                            "allowed_tools": allowed_tools,
+                        },
+                    )
+
+                    self.state.add_tool_result(result)
+                    continue
 
                 self._status("Action", action)
                 self._debug("Action Arguments", arguments)
