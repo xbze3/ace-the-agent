@@ -57,9 +57,9 @@ def log_step(event: str, payload: Any = None) -> None:
     if not _SHOW_LOGS:
         return
 
-    print("\nLOG ENTRY")
-    print(timestamp)
-    print(event)
+    # print("\nLOG ENTRY")
+    # print(timestamp)
+    # print(event)
 
     if payload is not None:
         print(_format_payload(payload))

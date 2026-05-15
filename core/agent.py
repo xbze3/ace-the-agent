@@ -377,19 +377,19 @@ class ACEAgent:
                         available_skills=self.skill_registry.summaries(),
                     )
 
-                self._debug("LLM Messages", messages)
+                # self._debug("LLM Messages", messages)
 
                 with spinner("Thinking"):
                     raw_response = call_llm(messages)
 
                 log_step("LLM_RAW_RESPONSE", raw_response)
-                self._debug("LLM Raw Response", raw_response)
+                # self._debug("LLM Raw Response", raw_response)
 
                 with spinner("Parsing response"):
                     parsed = parse_llm_response(raw_response)
 
                 log_step("LLM_PARSED_RESPONSE", parsed)
-                self._debug("LLM Parsed Response", parsed)
+                # self._debug("LLM Parsed Response", parsed)
 
                 if not parsed and self._is_llm_error(raw_response):
                     self._status("LLM", "request failed")
@@ -418,13 +418,13 @@ class ACEAgent:
                         raw_response = call_llm(repair_messages)
 
                     log_step("LLM_RETRY_RESPONSE", raw_response)
-                    self._debug("LLM Retry Response", raw_response)
+                    # self._debug("LLM Retry Response", raw_response)
 
                     with spinner("Parsing repaired response"):
                         parsed = parse_llm_response(raw_response)
 
                     log_step("LLM_RETRY_PARSED", parsed)
-                    self._debug("LLM Retry Parsed", parsed)
+                    # self._debug("LLM Retry Parsed", parsed)
 
                     if not parsed and self._is_llm_error(raw_response):
                         self._status("LLM", "repair request failed")
@@ -439,6 +439,30 @@ class ACEAgent:
 
                 if "final_answer" in parsed:
                     final = parsed["final_answer"]
+
+                    self._status("Result", "final answer ready")
+
+                    with spinner("Saving memory"):
+                        self.memory.process_interaction(
+                            user_input=routed_input,
+                            assistant_response=final,
+                            history=self.state.get_messages(),
+                        )
+
+                    self._section("DONE")
+                    return final
+
+                if parsed.get("action") == "final_answer":
+                    arguments = parsed.get("arguments", {})
+
+                    final = (
+                        parsed.get("final_answer")
+                        or arguments.get("final_answer")
+                        or arguments.get("response")
+                        or arguments.get("answer")
+                        or arguments.get("message")
+                        or "Task completed."
+                    )
 
                     self._status("Result", "final answer ready")
 
@@ -527,7 +551,7 @@ class ACEAgent:
                     )
 
                 log_step("TOOL_RESULT", result)
-                self._debug("Tool Result", result)
+                # self._debug("Tool Result", result)
 
                 if self.show_logs:
                     print("\n ◉ Tool Result")
